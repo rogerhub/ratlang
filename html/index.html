@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>The RatLang Programming Language</title>
+		<link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono|Open+Sans:400,600,300' rel='stylesheet' type='text/css'>
+		<link type="text/css" rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<header class="site-header">
+			<h1>The RatLang Programming Language</h1>
+			<nav class="site-navigation">
+				<ul class="site-links">
+					<li><a href="#examples">Examples</a></li><!--
+					--><li><a href="#manual">Manual</a></li><!--
+					--><li><a href="#download">Download</a></li>
+				</ul>
+			</nav>
+		</header>
+		<article class="site-callout">
+			<h2>RatLang is an open source programming language that wants to replace your calculator.</h2>
+		</article>
+		<a name="examples"></a>
+		<article>
+			<h2>Examples</h2>
+			<section class="example">
+				<h3>Hello World</h3>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> \"Hello World";</pre>
+				<p>Print anything by putting a backslash in front.</p>
+			</section>
+			<section class="example">
+				<h3>Basic arithmetic</h3>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.0/20.0;
+<strong>0.15</strong></pre>
+				<p>Simple math works like you&rsquo;d expect. This can be simplified to:
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3./20.;
+<strong>0.15</strong></pre>
+				<p>And simplified even more to:</p>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 03/20;
+<strong>0.15</strong></pre>
+			</section>
+			<section class="example">
+				<h3>Implicit decimal point</h3>
+				<p>One of the biggest differences between RatLang and other languages is the implicit decimal point. If you type a natural number without a decimal point like 35, it will be treated as 0.35 instead. This lets you write percentages easier:</p>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.50*80*70*1.08;
+<strong>2.11680</strong></pre>
+			</section>
+			<section class="example">
+				<h3>Alternate operators</h3>
+				<p>Since parentheses are hard and clumsy to type, a second set of arithmetic operators with higher precedence has been introduced in addition to the regular operators.</p>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3p4/1p6;     # Equivalent to (0.3*0.4)/(0.1*0.6)
+<strong>2.0</strong>
+<span class="prompt">rat&gt;</span> 3s41*2s1;    # Equivalent to (0.3 + 0.41) * (0.2 + 0.1)
+<strong>0.213</strong></pre>
+				<p>The two lines of code above should be read as <strong>.3 product .4, divided by .1 product .6</strong> and <strong>.3 sum .41, multiplied by .2 sum .1</strong>.
+				<p>Operator precedence is defined as follows: parentheses, </p>
+			</section>
+			<section class="example">
+				<h3>Variables</h3>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> lA = 4;      # "Let" A equal 4
+<strong>4</strong>
+<span class="prompt">rat&gt;</span> \A
+<strong>4</strong></pre>
+				<p>Variable names consist of one or more uppercase letters or underscores. Lowercase letters are not allowed in variable names since they're used as operators.</p>
+		</article>
+		<a name="manual"></a>
+		<article>
+			<h2>Manual</h2>
+			<p>The full documentation for RatLang is available in several formats:</p>
+		</article>
+	</body>
+</html>

@@ -1,0 +1,81 @@
+body {
+	background: #f1f1f1;
+	font: 16px/1.25 'Open Sans', sans-serif;
+	margin: 0;
+}
+.site-header {
+	background: #00477D;
+	color: white;
+	margin: 0 auto;
+	padding: 20px;
+	width: 950px;
+}
+h1 {
+	float: left;
+	font-weight: bold;
+	font-size: 1.25em;
+	line-height: 1;
+	margin: 0;
+}
+.site-navigation {
+	text-align: right; 
+}
+.site-links {
+	color: white;
+	display: inline;
+	line-height: 1.25em;
+	list-style: none;
+}
+.site-links li {
+	display: inline;
+	padding: 0 10px;
+}
+.site-links a {
+	color: #f1f1f1;
+	text-decoration: none;
+}
+article {
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	background: white;
+	margin: 0 auto 25px;
+	padding: 20px;
+	width: 950px;
+}
+article.site-callout {
+	border-radius: 0 0 4px 4px;
+	-moz-border-radius: 0 0 4px 4px;
+	-webkit-border-radius: 0 0 4px 4px;
+	text-align: center;
+}
+h2 {
+	font-weight: bold;
+	font-size: 1.35em;
+	margin: 0;
+}
+h3 {
+	font-weight: bold;
+	font-size: 1.1em;
+	margin: 0 0 1em;
+}
+.example {
+	border-top: 1px solid #ccc;
+	padding-top: 15px;
+	margin-top: 15px;
+}
+.code-block {
+	background: #fafad0;
+	border: 1px solid #00477d;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	color: #666;
+	display: block;
+	font: 16px/1.25 'Droid Sans Mono', monospace;
+	margin: 0 0 1em;
+	padding: 12px;
+}
+.prompt {
+	color: #dd0047;
+}
