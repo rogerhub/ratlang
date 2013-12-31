@@ -5,4 +5,7 @@ default: compile
 compile:
 	$(MAKE) -C src compile
 
-.PHONY: default compile
+clean:
+	$(MAKE) -C src clean
+
+.PHONY: default compile clean

@@ -1,7 +1,7 @@
 #ifndef ENV_H
 #define ENV_H
 
-#define PAIRTYPE_DOUBLE 2048
+#define PAIRTYPE_VALUE 2048
 
 /** A dictionary from strings to doubles. (Environment) */
 typedef struct {

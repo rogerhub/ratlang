@@ -2,7 +2,8 @@
 
 %{
 #include <stdlib.h>
-#include "ratlang.tab.h"
+#include "node.h"
+#include "parser.h"
 
 #define ATOF_FULL 1024
 #define ATOF_L 1025
@@ -31,7 +32,7 @@ q                 return QUOTIENT;
 \/                return SLASH;
 r                 return REMAINDER;
 %                 return MOD;
-t                 return TOTHE;
+t                 return RAISE;
 \^                return POWER;
 e                 return EXPONENTIATE;
 \(                return LPAREN;
@@ -52,4 +53,17 @@ double rat_atof (char const * c, int clen, int type) {
 	} else {
 		return atof (c);
 	}
+}
+
+int main(int argc, char** argv) {
+	char* k;
+	while (k = readline ("rat> ")) {
+
+	YY_BUFFER_STATE b = yy_scan_string (k);
+	yy_switch_to_buffer (b);
+    yyparse ();
+
+	}
+
+    return 0;
 }
