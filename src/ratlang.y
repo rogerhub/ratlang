@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
     #include "node.h"
+    #include "runtime.h"
     int yylex (void);
     void yyerror (char const *);
 %}
@@ -16,7 +17,8 @@
 
 %token <dval> NUM
 %token <cpval> ID
-%token <cpval> FUNCTION
+%token <cpval> FUNCTION_NAME
+%token <cpval> STRING
 %token LET
 %token EQUAL
 %token SUM
@@ -34,8 +36,12 @@
 %token EXPONENTIATE
 %token LPAREN
 %token RPAREN
+%token LCURLY
+%token RCURLY
 %token PRINT
 %token SEMICOLON
+%token COMMA
+%token FUNCTION
 
 %left PLUS MINUS
 %left TIMES SLASH
@@ -46,33 +52,38 @@
 %left REMAINDER
 %right RAISE
 %right EXPONENTIATE
+%left COMMA
 
-// %type <npval> program;
-%type <npval> stmts;
-%type <npval> stmt;
-%type <npval> assign_stmt;
-%type <npval> print_stmt;
-%type <npval> expression_stmt;
-%type <npval> expression;
-%type <npval> expr1;
-%type <npval> expr2;
-%type <npval> subexpression;
-%type <npval> call;
-%type <npval> atom;
-%type <npval> target;
-%type <npval> number;
-%type <npval> identifier;
-%type <npval> function;
+%type <npval> program
+%type <npval> stmts
+%type <npval> stmt
+%type <npval> assign_stmt
+%type <npval> print_stmt
+%type <npval> expression_stmt
+%type <npval> params
+%type <npval> formals
+%type <npval> function_value
+%type <npval> expression
+%type <npval> expr1
+%type <npval> expr2
+%type <npval> subexpression
+%type <npval> call
+%type <npval> atom
+%type <npval> target
+%type <npval> number
+%type <npval> identifier
+%type <npval> function_name
+%type <npval> string
 
 %%
 
 program : stmts {
-            Env e;
-            env_init (&e);
-            node_calculate_value ($1, &e);
-            printf ("program value: %10.10f\n", value_get ( node_value ($1)) ); }
+            node_calculate_value ($1, runtime_global_env);
+            char* rep = value_string (node_value ($1));
+            printf ("program value: %s\n", rep); 
+            free (rep); }
         ;
-stmts : stmt stmts { node_append_child ($2, $1); $$ = $2; }
+stmts : stmts stmt { node_append_child ($1, $2); $$ = $1; }
       | /* empty */ { $$ = node_from_token (SEMICOLON); }
       ;
 stmt : assign_stmt
@@ -85,7 +96,16 @@ print_stmt : PRINT expression SEMICOLON { $$ = node_from_token_c1 (PRINT, $2); }
            ;
 expression_stmt : expression SEMICOLON { $$ = $1; }
                 ;
+params : params COMMA expression { node_append_child ($1, $3); $$ = $1; }
+       | expression { $$ = node_from_token_c1 (COMMA, $1); }
+       ;
+formals : formals COMMA identifier { node_append_child ($1, $3); $$ = $1; }
+        | identifier { $$ = node_from_token_c1 (COMMA, $1); }
+        ;
+function_value : FUNCTION LPAREN formals RPAREN LCURLY expression RCURLY { $$ = node_from_function ($3, $6); }
+         ;
 expression : expr1
+           | function_value
            ;
 expr1 : expr2
 
@@ -115,10 +135,11 @@ subexpression : call
               | LPAREN expression RPAREN { $$ = $2; }
               ;
 call : atom
-     | function LPAREN expression RPAREN { $$ = node_from_token_c2 (LPAREN, $1, $3); }
+     | function_name LPAREN params RPAREN { $$ = node_from_token_c2 (LPAREN, $1, $3); }
      ;
 atom : number
      | identifier
+     | string
      ;
 target : identifier
        ;
@@ -126,8 +147,11 @@ number : NUM { $$ = node_from_double ($1); }
        ;
 identifier : ID { $$ = node_from_identifier ($1); }
            ;
-function : FUNCTION { $$ = node_from_identifier ($1); }
-         ;
+function_name : FUNCTION_NAME { $$ = node_from_identifier ($1); }
+              | identifier
+              ;
+string : STRING { $$ = node_from_string ($1); }
+       ;
 
 %%
 void yyerror (char const * c) {

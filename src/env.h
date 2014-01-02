@@ -14,15 +14,18 @@ typedef struct {
 	int capacity;
 	EnvPair* element;
 } EnvBucket;
-typedef struct {
+typedef struct Env {
 	int size;
 	int buckets;
 	EnvBucket* bucket;
+	struct Env* parent;
 } Env;
 
 void env_print (Env* e);
 
 void env_init (Env* e);
+
+void env_set_parent (Env* e, Env* p);
 
 void env_put (Env* e, char* key, int type, void* value);
 

@@ -1,11 +1,34 @@
 #ifndef VALUE_H
 #define VALUE_H
 
-typedef double Value;
+#define VALUETYPE_NONE 8192
+#define VALUETYPE_PRIMITIVE 8193
+#define VALUETYPE_FUNCTION 8194
+#define VALUETYPE_STRING 8195
 
-Value* value_from_double(double d);
+typedef struct {
+	int type;
+	double dval;
+	char* cpval;
+	void* fformals;
+	void* fexpression;
+} Value;
 
-double value_get (Value* v);
+Value* value_from_double (double d);
+
+Value* value_from_string (char* s);
+
+Value* value_from_none ();
+
+Value* value_from_function (void* formals, void* expression);
+
+char* value_string (Value* v);
+
+int value_type (Value* v);
+
+void* value_formals (Value* v);
+
+void* value_expression (Value* v);
 
 Value* value_add (Value* v, Value* w);
 

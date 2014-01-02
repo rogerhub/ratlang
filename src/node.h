@@ -8,6 +8,8 @@
 #define NODETYPE_DOUBLE 4096
 #define NODETYPE_IDENTIFIER 4097
 #define NODETYPE_TOKEN 4098
+#define NODETYPE_STRING 4099
+#define NODETYPE_FUNCTION 4100
 
 struct NodeList;
 
@@ -39,13 +41,21 @@ Node* node_from_value (Value* v);
 
 Node* node_from_identifier (char* c);
 
+Node* node_from_string (char* c);
+
 Node* node_from_token (int t);
 
 Node* node_from_token_c1 (int t, Node* c1);
 
 Node* node_from_token_c2 (int t, Node* c1, Node* c2);
 
-void node_calculate_value (Node* n, Env* ev);
+Node* node_from_function (Node* formals, Node* expression);
+
+void node_calculate_value (Node* n, Env* e);
+
+void node_reset_value (Node* n);
+
+void node_run_function (Node* n, Env* e);
 
 Value* node_value (Node* n);
 

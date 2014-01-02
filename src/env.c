@@ -15,6 +15,11 @@ void env_init (Env* e) {
 	e->buckets = 1;
 	e->bucket = (EnvBucket*) malloc (e->buckets * sizeof (EnvBucket));
 	envbucket_init (e->bucket + 0);
+	e->parent = NULL;
+}
+
+void env_set_parent (Env* e, Env* p) {
+	e->parent = p;
 }
 
 void env_put (Env* e, char* key, int type, void* value) {
@@ -36,7 +41,11 @@ void env_define (Env* e, EnvPair* p) {
 
 EnvPair* env_get (Env* e, char* key) {
 	int bucket = env_hash (key, e->buckets);
-	return envbucket_get (e->bucket + bucket, key);
+	EnvPair* result = envbucket_get (e->bucket + bucket, key);
+	if (result == NULL && e->parent != NULL) {
+		return env_get (e->parent, key);
+	}
+	return result;
 }
 
 void env_rehash (Env* e) {
@@ -85,7 +94,7 @@ int env_hash (char* k, int limit) {
 
 int env_strequal (char* a, char* b) {
 	while ((*a) != '\0') {
-		if ((*b) == '\0' || (*a) != (*b)) {
+		if ((*a) != (*b)) {
 			return 0;
 		}
 		a += 1;
