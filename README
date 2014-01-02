@@ -5,7 +5,7 @@ RatLang is the Ratio Language designed to replace your command line calculator.
 
 Copyright ©2014 RogerHub. Licensed under the GNU GENERAL PUBLIC LICENSE.
 
-Enjoy!
+[RatLang Project Home Page](http://rogerhub.github.io/ratlang/)
 
 Requirements
 ------------
