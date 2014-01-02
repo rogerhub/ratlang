@@ -87,11 +87,11 @@ stmt : assign_stmt
      | print_stmt
      | expression_stmt
      ;
-assign_stmt : LET target EQUAL expression SEMICOLON { $$ = node_from_token_c2 (LET, $2, $4); }
+assign_stmt : LET target EQUAL expression semicolon { $$ = node_from_token_c2 (LET, $2, $4); }
             ;
-print_stmt : PRINT expression SEMICOLON { $$ = node_from_token_c1 (PRINT, $2); }
+print_stmt : PRINT expression semicolon { $$ = node_from_token_c1 (PRINT, $2); }
            ;
-expression_stmt : expression SEMICOLON { $$ = $1; }
+expression_stmt : expression semicolon { $$ = $1; }
                 ;
 params : params COMMA expression { node_append_child ($1, $3); $$ = $1; }
        | expression { $$ = node_from_token_c1 (COMMA, $1); }
@@ -149,6 +149,11 @@ function_name : FUNCTION_NAME { $$ = node_from_identifier ($1); }
               ;
 string : STRING { $$ = node_from_string ($1); }
        ;
+semicolon : SEMICOLON more_semicolons
+          ;
+more_semicolons : /* empty */
+                | SEMICOLON more_semicolons
+                ;
 
 %%
 void yyerror (char const * c) {
