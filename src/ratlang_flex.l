@@ -3,7 +3,7 @@
 %{
 #include <stdlib.h>
 #include "node.h"
-#include "parser.h"
+#include "ratlang_bison.h"
 #include "runtime.h"
 
 #define ATOF_FULL 1024

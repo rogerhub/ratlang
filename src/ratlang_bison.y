@@ -12,9 +12,6 @@
     char* cpval;
 }
 
-%output "parser.c"
-%defines "parser.h"
-
 %token <dval> NUM
 %token <cpval> ID
 %token <cpval> FUNCTION_NAME

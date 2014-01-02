@@ -1,5 +1,5 @@
 #include "node.h"
-#include "parser.h"
+#include "ratlang_bison.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
