@@ -18,9 +18,19 @@ Requirements
 Compiling
 ---------
 
-  ./configure
-  make
-  make install
+### Generate autotools stuff
+
+    ./autogen.sh
+
+### Build binaries
+
+    ./configure
+    make
+    make install
+
+### Build code package for distribution (optional)
+    
+    make distcheck
 
 LICENSE
 -------
