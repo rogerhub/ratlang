@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "config.h"
 #include "node.h"
 #include "ratlang_bison.h"
@@ -90,10 +92,47 @@ void usage (FILE* s, char* binary_name) {
 	fprintf (s, "This is %s: %s%s%s\n", PACKAGE_STRING, "report bugs to <", PACKAGE_BUGREPORT, ">");
 }
 
+void process_line (char* l) {
+	l = newline_dup (l);
+	YY_BUFFER_STATE b = yy_scan_string (l);
+	yy_switch_to_buffer (b);
+	yyparse ();
+	free (l);
+}
+
+int read_line_from_file (FILE* file, char** buffer_target) {
+	int current_buffer_size = 4095;
+	char* buffer = (char*) malloc (sizeof (char) * current_buffer_size);
+	int length = 0;
+	char ch = 0;
+
+	while (1) {
+		if (length == current_buffer_size) {
+			current_buffer_size *= 2;
+			buffer = realloc (buffer, current_buffer_size);
+		}
+		ch = getc (file);
+		if (ch == '\n' || ch == EOF) {
+			buffer[length] = '\0';
+			break;
+		} else {
+			buffer[length] = ch;
+			length += 1;
+		}
+	}
+	*buffer_target = buffer;
+	if (ch == EOF) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 #define PROGACTION_HELP 512
 #define PROGACTION_INTERACTIVE 513
 #define PROGACTION_FILE 514
-#define PROGACTION_STDIN 515
+#define PROGACTION_FILE_INTERACTIVE 515
+#define PROGACTION_STDIN 516
 
 int main (int argc, char** argv) {
 
@@ -104,14 +143,22 @@ int main (int argc, char** argv) {
 		if (strcmp (argv[i], "-h") == 0 || strcmp (argv[i], "--help") == 0) {
 			action = PROGACTION_HELP;
 		} else if (strcmp (argv[i], "-i") == 0 || strcmp (argv[i], "--interactive") == 0) {
-			action = PROGACTION_INTERACTIVE;
+			if (action == PROGACTION_FILE || action == PROGACTION_FILE_INTERACTIVE) {
+				action = PROGACTION_FILE_INTERACTIVE;
+			} else {
+				action = PROGACTION_INTERACTIVE;
+			}
 		} else if (*(argv[i]) == '-') {
 			fprintf (stderr, "unrecognized option: %s\ntry %s --help\n", argv[i], argv[0]);
 			return EINVAL;
 		} else {
 			if (input_file_name == NULL) {
 				input_file_name = argv[i];
-				action = PROGACTION_FILE;
+				if (action == PROGACTION_INTERACTIVE || action == PROGACTION_FILE_INTERACTIVE) {
+					action = PROGACTION_FILE_INTERACTIVE;
+				} else {
+					action = PROGACTION_FILE;
+				}
 			} else {
 				fprintf (stderr, "usage error: unexpected argument %s\ntry %s --help\n", argv[i], argv[0]);
 				return EINVAL;
@@ -122,25 +169,47 @@ int main (int argc, char** argv) {
 	if (action == PROGACTION_HELP) {
 		usage (stderr, argv[0]);
 		return 0;
-	}
+	} else {
+		/** Initialize persistent environment */
+		runtime_global_env = (Env*) malloc (sizeof (Env));
+		env_init (runtime_global_env);
+		print_result = 0;
 
-	/** Initialize persistent environment */
-	runtime_global_env = (Env*) malloc (sizeof (Env));
-	env_init (runtime_global_env);
+		if (action == PROGACTION_FILE || action == PROGACTION_FILE_INTERACTIVE) {
+			FILE* in = fopen (input_file_name, "r");
+			if (in == NULL) {
+				fprintf (stderr, "unable to open file for reading: %s\n", input_file_name);
+				return ENOENT;
+			}
+			char* buffer;
+			int has_more;
+			while (1) {
+				has_more = read_line_from_file (in, &buffer);
+				process_line (buffer);
+				free (buffer);
+				if (!has_more) {
+					break;
+				}
+			}
+		}
 
-	char* line;
-	char* line_processed;
-	char* prompt = (action == PROGACTION_INTERACTIVE) ? "rat> " : "";
-	while (line = readline (prompt)) {
-
-		add_history (line);
-		line_processed = newline_dup (line);
-		YY_BUFFER_STATE b = yy_scan_string (line_processed);
-		yy_switch_to_buffer (b);
-		yyparse ();
-		free (line);
-		free (line_processed);
-
+		if (action == PROGACTION_FILE_INTERACTIVE ||
+			action == PROGACTION_INTERACTIVE ||
+			action == PROGACTION_STDIN) {
+			char* line;
+			char* prompt;
+			if (action == PROGACTION_INTERACTIVE || action == PROGACTION_FILE_INTERACTIVE) {
+				prompt = "rat> ";
+				print_result = 1;
+			} else {
+				prompt = "";
+			}
+			while (line = readline (prompt)) {
+				add_history (line);
+				process_line (line);
+				free (line);
+			}
+		}
 	}
 
     return 0;
