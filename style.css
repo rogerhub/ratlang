@@ -79,3 +79,28 @@ h3 {
 .prompt {
 	color: #dd0047;
 }
+code {
+	background: #fafad0;
+	display: inline;
+	font: 16px/1.25 'Droid Sans Mono', monospace;
+	margin: 0;
+	padding: 2px 4px;
+}
+.code-table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	margin: 0 auto;
+}
+.code-table th {
+	background: #f8f8f8;
+	border: 1px solid #ccc;
+	font-weight: bold;
+	margin: 0;
+	padding: 0.3em;
+	text-align: center;
+}
+.code-table td {
+	border: 1px solid #ccc;
+	margin: 0;
+	padding: 0.3em;
+}

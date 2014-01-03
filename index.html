@@ -25,48 +25,94 @@
 			<h2>Examples</h2>
 			<section class="example">
 				<h3>Hello World</h3>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> \"Hello World";</pre>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> \"Hello World!"
+Hello World!</pre>
 				<p>Print anything by putting a backslash in front.</p>
 			</section>
 			<section class="example">
 				<h3>Basic arithmetic</h3>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.0/20.0;
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.0/20.0
 <strong>0.15</strong></pre>
 				<p>Simple math works like you&rsquo;d expect. This can be simplified to:
-				<pre class="code-block"><span class="prompt">rat&gt;</span> 3./20.;
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3./20.
 <strong>0.15</strong></pre>
 				<p>And simplified even more to:</p>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> 03/20;
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 03/20
 <strong>0.15</strong></pre>
 			</section>
 			<section class="example">
 				<h3>Implicit decimal point</h3>
 				<p>One of the biggest differences between RatLang and other languages is the implicit decimal point. If you type a natural number without a decimal point like 35, it will be treated as 0.35 instead. This lets you write percentages easier:</p>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.50*80*70*1.08;
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3.50*80*70*1.08
 <strong>2.11680</strong></pre>
 			</section>
 			<section class="example">
 				<h3>Alternate operators</h3>
 				<p>Since parentheses are hard and clumsy to type, a second set of arithmetic operators with higher precedence has been introduced in addition to the regular operators.</p>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> 3p4/1p6;     # Equivalent to (0.3*0.4)/(0.1*0.6)
+				<pre class="code-block"><span class="prompt">rat&gt;</span> 3p4/1p6      # Equivalent to (0.3*0.4)/(0.1*0.6)
 <strong>2.0</strong>
-<span class="prompt">rat&gt;</span> 3s41*2s1;    # Equivalent to (0.3 + 0.41) * (0.2 + 0.1)
+<span class="prompt">rat&gt;</span> 3s41*2s1     # Equivalent to (0.3 + 0.41) * (0.2 + 0.1)
 <strong>0.213</strong></pre>
 				<p>The two lines of code above should be read as <strong>.3 product .4, divided by .1 product .6</strong> and <strong>.3 sum .41, multiplied by .2 sum .1</strong>.
-				<p>Operator precedence is defined as follows: parentheses, </p>
+				<p>Operator precedence is defined as follows:</p>
+				<table class="code-table">
+					<tr><th>Operation</th><th>Example</th></tr>
+					<tr><td>Function calls</td><td><code>SUM(3, 5) &rarr; 0.8</code></td></tr>
+					<tr><td>Negation</td><td><code>-2.0 &rarr; -2.0</code></td></tr>
+					<tr><td>Base-10 exponentiation</td><td><code>1.6e-3.0 &rarr; 0.0016</code></td></tr>
+					<tr><td>To the power of</td><td><code>1.6 * 10.0t-3.0 &rarr; 0.0016</code></td></tr>
+					<tr><td>Remainder</td><td><code>11r9 &rarr; 0.11</code></td></tr>
+					<tr><td>Product<br />Quotient</td><td><code>2.0p3.0 &rarr; 6.0</code><br /><code>3.0q4.0 &rarr; 0.75</code></td></tr>
+					<tr><td>Sum<br />Difference</td><td><code>7s9 &rarr; 1.6</code><br /><code>8d3 &rarr; 0.5</code></td></tr>
+					<tr><td>Power</td><td><code>1.6 * 10.0^-3.0 &rarr; 0.0016</code></td></tr>
+					<tr><td>Mod</td><td><code>11%9 &rarr; 0.11</code></td></tr>
+					<tr><td>Times<br />Slash</td><td><code>2.0*3.0 &rarr; 6.0</code><br /><code>3.0/4.0 &rarr; 0.75</code></td></tr>
+					<tr><td>Plus<br />Minus</td><td><code>7+9 &rarr; 1.6</code><br /><code>8-3 &rarr; 0.5</code></td></tr>
+				</table>
+				<p>Parentheses can be used to group expressions and override this order of operations. However, you will find that parentheses are rarely necessary in RatLang, as you get more comfortable with the alternate operators.</p>
 			</section>
 			<section class="example">
 				<h3>Variables</h3>
-				<pre class="code-block"><span class="prompt">rat&gt;</span> lA = 4;      # "Let" A equal 4
-<strong>4</strong>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> lA = 4       # "Let" A equal 0.4
+<strong>0.4</strong>
 <span class="prompt">rat&gt;</span> \A
-<strong>4</strong></pre>
+<strong>0.4</strong></pre>
 				<p>Variable names consist of one or more uppercase letters or underscores. Lowercase letters are not allowed in variable names since they're used as operators.</p>
+			</section>
+			<section class="example">
+				<h3>Functions</h3>
+				<pre class="code-block"><span class="prompt">rat&gt;</span> lA = f(X){X + 3}
+<strong>(function value)</strong>
+<span class="prompt">rat&gt;</span> \A(3)
+<strong>0.6</strong></pre>
+			<p>The <code>f</code> operator is used to define lambda expressions. Functions in RatLang are purely functional and can have no side effects. They consist of an argument list and a return expression, which can be another function. All functions are anonymous and can be assigned to variables like normal values.</p>
+			</section>
 		</article>
 		<a name="manual"></a>
 		<article>
 			<h2>Manual</h2>
-			<p>The full documentation for RatLang is available in several formats:</p>
+			<p>A complete user's manual for RatLang is coming soon.</p>
+		</article>
+		<a name="download"></a>
+		<article>
+			<h2>Download</h2>
+			<p>You can download and compile the source code for RatLang yourself from GitHub. You will need the following tools before you begin:</p>
+			<ul>
+				<li>A modern C compiler like GCC</li>
+				<li>The libreadline-dev library for readline C headers</li>
+				<li>GNU Flex, the lexer generator</li>
+				<li>GNU Bison, the parser generator</li>
+				<li>Autoconf and automake, to generate the configure and make scripts</li>
+			</ul>
+			<p>Grab the latest version of the source code via git or HTTP:</p>
+			<pre class="code-block"># Via git
+<span class="prompt">user@console $</span> git clone git@github.com:rogerhub/ratlang.git
+
+# Via HTTP
+<span class="prompt">user@console $</span> wget "https://github.com/rogerhub/ratlang/archive/master.zip"
+<span class="prompt">user@console $</span> unzip master.zip</pre>
+			<p>Then, run the <code>./autogen.sh</code> script, configure the installation with <code>./configure</code>, and <code>make &amp;&amp; sudo make install</code>.</p>
+			<p>You can give a prefix to <code>./configure</code> and <code>make install</code> to install RatLang without superuser privileges. This is recommended, since RatLang is experimental alpha software.</p>
 		</article>
 	</body>
 </html>
