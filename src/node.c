@@ -206,7 +206,9 @@ Node* node_child (Node* n, int number) {
 }
 
 void node_append_child (Node* n, Node* c) {
-	nodelist_insert (n->children, c);
+	if (c != NULL) {
+		nodelist_insert (n->children, c);
+	}
 }
 
 void nodelist_init (NodeList* l) {

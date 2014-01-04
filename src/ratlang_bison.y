@@ -79,7 +79,7 @@ program : stmts {
             node_calculate_value ($1, runtime_global_env);
             char* rep = value_string (node_value ($1));
             if (print_result) {
-                printf ("program value: %s\n", rep);
+                printf ("%s\n", rep);
             }
             free (rep); }
         ;
@@ -97,7 +97,7 @@ print_stmt : PRINT expression semicolon { $$ = node_from_token_c1 (PRINT, $2); }
            ;
 expression_stmt : expression semicolon { $$ = $1; }
                 ;
-semicolon_stmt : semicolon { $$ = node_from_token (SEMICOLON); }
+semicolon_stmt : semicolon { $$ = NULL; }
                ;
 params : params COMMA expression { node_append_child ($1, $3); $$ = $1; }
        | expression { $$ = node_from_token_c1 (COMMA, $1); }
