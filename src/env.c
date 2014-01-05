@@ -18,13 +18,22 @@ void env_init (Env* e) {
 	e->parent = NULL;
 }
 
+void env_destroy (Env* e) {
+	int i;
+	for (i = 0; i < e->buckets; i++) {
+		envbucket_destroy (e->bucket + i);
+	}
+	free (e->bucket);
+	free (e);
+}
+
 void env_set_parent (Env* e, Env* p) {
 	e->parent = p;
 }
 
 void env_put (Env* e, char* key, int type, void* value) {
 	EnvPair* p = malloc (sizeof (EnvPair));
-	p->key = key;
+	p->key = strdup (key);
 	p->type = type;
 	p->value = value;
 	env_define (e, p);
@@ -71,6 +80,7 @@ void env_rehash (Env* e) {
 		}
 		envbucket_destroy (b);
 	}
+	free (e->bucket);
 
 	/** Cleanup */
 	e->buckets = new_buckets;
@@ -110,6 +120,11 @@ void envbucket_init (EnvBucket* b) {
 }
 
 void envbucket_destroy (EnvBucket* b) {
+	/** Warning: Does not follow destructor convention.
+	 *  This function does not free (b), since b is typically
+	 *  allocated as part of a larger array.
+	 *
+	 *  Callers of this function must free b themselves. */
 	free (b->element);
 }
 

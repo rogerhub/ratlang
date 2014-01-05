@@ -2,6 +2,8 @@
 #include "value.h"
 #include <stdio.h>
 
-test_all {
+test_begin
+test
 	mu_assert ("trivial", 3 == 3);
-} end_test
+end_test
+test_finish

@@ -1,6 +1,6 @@
 AC_INIT([ratlang], [0.1], [roger@rogerhub-dot-com])
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 AM_PROG_LEX
 if test "x$LEX" != xflex; then

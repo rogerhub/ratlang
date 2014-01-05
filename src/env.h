@@ -25,6 +25,8 @@ void env_print (Env* e);
 
 void env_init (Env* e);
 
+void env_destroy (Env* e);
+
 void env_set_parent (Env* e, Env* p);
 
 void env_put (Env* e, char* key, int type, void* value);
