@@ -4,6 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+Value* value_from_int (int i) {
+	Value* v = malloc (sizeof (Value));
+	v->type = VALUETYPE_INTEGER;
+	v->ival = i;
+	return v;
+}
+
 Value* value_from_double (double d) {
 	Value* v = malloc (sizeof (Value));
 	v->type = VALUETYPE_PRIMITIVE;

@@ -5,9 +5,11 @@
 #define VALUETYPE_PRIMITIVE 8193
 #define VALUETYPE_FUNCTION 8194
 #define VALUETYPE_STRING 8195
+#define VALUETYPE_INTEGER 8196
 
 typedef struct {
 	int type;
+	int ival;
 	double dval;
 	char* cpval;
 	void* fformals;
