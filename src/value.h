@@ -18,6 +18,8 @@ typedef struct {
 
 Value* value_from_double (double d);
 
+Value* value_from_integer (int i);
+
 Value* value_from_string (char* s);
 
 Value* value_from_none ();

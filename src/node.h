@@ -10,6 +10,7 @@
 #define NODETYPE_TOKEN 4098
 #define NODETYPE_STRING 4099
 #define NODETYPE_FUNCTION 4100
+#define NODETYPE_INTEGER 4101
 
 struct NodeList;
 
@@ -20,7 +21,7 @@ typedef struct Node {
 	/** Node raw values */
 	double dval;
 	char* cpval;
-	int ival; /** For tokens */
+	int ival; /** For tokens too */
 
 	/** Node calculated symbolic tree value */
 	Value* v;
@@ -36,6 +37,8 @@ typedef struct NodeList {
 } NodeList;
 
 Node* node_from_double (double d);
+
+Node* node_from_integer (int i);
 
 Node* node_from_value (Value* v);
 
@@ -64,6 +67,8 @@ int node_arity (Node* n);
 Node* node_child (Node* n, int number);
 
 void node_append_child (Node* n, Node* c);
+
+void node_childlist_init (Node* n);
 
 void nodelist_init (NodeList* l);
 

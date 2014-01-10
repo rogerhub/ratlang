@@ -39,6 +39,7 @@
 %token SEMICOLON
 %token COMMA
 %token FUNCTION
+%token INTEGER
 
 %left PLUS MINUS
 %left TIMES SLASH
@@ -68,6 +69,7 @@
 %type <npval> call
 %type <npval> atom
 %type <npval> target
+%type <npval> integer
 %type <npval> number
 %type <npval> identifier
 %type <npval> function_name
@@ -78,7 +80,7 @@
 program : stmts {
             node_calculate_value ($1, runtime_global_env);
             char* rep = value_string (node_value ($1));
-            if (print_result) {
+            if (print_result && rep[0] != '\0') {
                 printf ("%s\n", rep);
             }
             free (rep); }
@@ -143,9 +145,12 @@ call : atom
 atom : number
      | identifier
      | string
+     | integer
      ;
 target : identifier
        ;
+integer : INTEGER NUM { $$ = node_from_integer ($2); }
+        ;
 number : NUM { $$ = node_from_double ($1); }
        ;
 identifier : ID { $$ = node_from_identifier ($1); }

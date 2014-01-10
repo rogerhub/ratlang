@@ -53,6 +53,7 @@ e                 return EXPONENTIATE;
 \n                return SEMICOLON;
 ,                 return COMMA;
 f                 return FUNCTION;
+@                 return INTEGER;
 
 %%
 
@@ -173,6 +174,8 @@ int main (int argc, char** argv) {
 		/** Initialize persistent environment */
 		runtime_global_env = (Env*) malloc (sizeof (Env));
 		env_init (runtime_global_env);
+		env_put (runtime_global_env, "SCALE", PAIRTYPE_VALUE, value_from_integer (40));
+		env_put (runtime_global_env, "IDP", PAIRTYPE_VALUE, value_from_integer (1));
 		print_result = 0;
 
 		if (action == PROGACTION_FILE || action == PROGACTION_FILE_INTERACTIVE) {

@@ -4,17 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-Value* value_from_int (int i) {
-	Value* v = malloc (sizeof (Value));
-	v->type = VALUETYPE_INTEGER;
-	v->ival = i;
-	return v;
-}
-
 Value* value_from_double (double d) {
 	Value* v = malloc (sizeof (Value));
 	v->type = VALUETYPE_PRIMITIVE;
 	v->dval = d;
+	return v;
+}
+
+Value* value_from_integer (int i) {
+	Value* v = malloc (sizeof (Value));
+	v->type = VALUETYPE_INTEGER;
+	v->ival = i;
 	return v;
 }
 
@@ -43,19 +43,24 @@ Value* value_from_function (void* formals, void* expression) {
 }
 
 char* value_string (Value* v) {
-	if (v == NULL) {
-		return strdup ("(Unidentified value)");
-	} else if (v->type == VALUETYPE_NONE) {
+	if (v == NULL || v->type == VALUETYPE_NONE) {
 		return strdup ("");
 	} else if (v->type == VALUETYPE_STRING) {
 		return strdup (v->cpval);
 	} else if (v->type == VALUETYPE_FUNCTION) {
 		return strdup ("(function)");
-	} else {
+	} else if (v->type == VALUETYPE_INTEGER) {
+		/** TODO artificial limitation */
+		char* buf = (char*) malloc (100 * sizeof (char));
+		sprintf (buf, "%d", v->ival);
+		return buf;
+	} else if (v->type == VALUETYPE_PRIMITIVE) {
 		/** TODO detect size of float */
 		char* buf = (char*) malloc (100 * sizeof (char));
 		sprintf (buf, "%10.10f", v->dval);
 		return buf;
+	} else {
+		return strdup ("(unknown value)");
 	}
 }
 
