@@ -22,6 +22,8 @@ void value_destroy (Value* v) {
 		mpf_clear (v->fval);
 	} else if (v->type == VALUETYPE_INTEGER) {
 		mpz_clear (v->zval);
+	} else if (v->type == VALUETYPE_STRING) {
+		free (v->cpval);
 	}
 	free (v);
 }
@@ -45,7 +47,7 @@ Value* value_from_integer (int i) {
 Value* value_from_string (char* s) {
 	Value* v = (Value*) malloc (sizeof (Value));
 	v->type = VALUETYPE_STRING;
-	v->cpval = s; /** TODO String parsing */
+	v->cpval = strdup (s);
 	return v;
 }
 
@@ -154,7 +156,14 @@ Value* value_add (Value* v, Value* w) {
 	Value* r = malloc (sizeof (Value));
 	r->type = common_type;
 	if (common_type == VALUETYPE_STRING) {
-		// TODO
+		Value* op1 = value_promote_string (v);
+		Value* op2 = value_promote_string (w);
+		int length = strlen (op1->cpval) + strlen (op2->cpval);
+		r->cpval = (char*) malloc (sizeof (char) * (length + 1));
+		strcpy (r->cpval, op1->cpval);
+		strcat (r->cpval, op2->cpval);
+		value_destroy (op1);
+		value_destroy (op2);
 	} else if (common_type == VALUETYPE_PRIMITIVE) {
 		mpf_init2 (r->fval, value_precision ());
 		Value* op1 = value_promote_primitive (v);
@@ -166,7 +175,9 @@ Value* value_add (Value* v, Value* w) {
 		mpz_init2 (r->zval, value_precision ());
 		mpz_add (r->zval, v->zval, w->zval);
 	} else {
-		// TODO
+		RUNTIME_ERROR ("ValueAdd: incompatible types");
+		free (r);
+		return value_from_none ();
 	}
 	return r;
 }

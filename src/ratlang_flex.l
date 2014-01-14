@@ -18,42 +18,61 @@
 #define ATOF_R 1026
 #define ATOF_NAKED 1027
 double rat_atof (char const * c, int clen, int type);
+void rat_strclear ();
+void rat_strappend (char c);
+void rat_strappends (char const * c, int leng);
+char * rat_strget ();
+int rat_octalescape (char const * c, int leng);
 %}
 
+%x STR
 %%
-\"([^\"]|\\\")+\" yylval.cpval = strdup (yytext); return STRING;
-[ \t]+            /* Throw away whitespace */
-[0-9]+\.[0-9]+    yylval.dval = rat_atof (yytext, yyleng, ATOF_FULL); return NUM;
-[0-9]+\.          yylval.dval = rat_atof (yytext, yyleng, ATOF_L); return NUM;
-\.[0-9]+          yylval.dval = rat_atof (yytext, yyleng, ATOF_R); return NUM;
-[0-9]+            yylval.dval = rat_atof (yytext, yyleng, ATOF_NAKED); return NUM;
-[A-Z_]+           yylval.cpval = strdup (yytext); return ID;
-[a-z]{2,}         yylval.cpval = strdup (yytext); return FUNCTION_NAME;
-l                 return LET;
-=                 return EQUAL;
-s                 return SUM;
-\+                return PLUS;
-d                 return DIFFERENCE;
--                 return MINUS;
-p                 return PRODUCT;
-\*                return TIMES;
-q                 return QUOTIENT;
-\/                return SLASH;
-r                 return REMAINDER;
-%                 return MOD;
-t                 return RAISE;
-\^                return POWER;
-e                 return EXPONENTIATE;
-\(                return LPAREN;
-\)                return RPAREN;
-\{                return LCURLY;
-\}                return RCURLY;
-\\                return PRINT;
-;                 return SEMICOLON;
-\n                return SEMICOLON;
-,                 return COMMA;
-f                 return FUNCTION;
-@                 return INTEGER;
+<INITIAL>\"                 BEGIN(STR); rat_strclear ();
+<STR>\"                     BEGIN(INITIAL); yylval.cpval = strdup (rat_strget ()); return STRING;
+<STR>\n                     RUNTIME_ERROR ("Lexer: unterminated string"); BEGIN(INITIAL);
+<STR>\\['"?\\]              rat_strappend (yytext[1]);
+<STR>\\a                    rat_strappend ('\a');
+<STR>\\b                    rat_strappend ('\b');
+<STR>\\f                    rat_strappend ('\f');
+<STR>\\n                    rat_strappend ('\n');
+<STR>\\r                    rat_strappend ('\r');
+<STR>\\t                    rat_strappend ('\t');
+<STR>\\v                    rat_strappend ('\v');
+<STR>\\[0-7]{1,3}           rat_strappend (rat_octalescape (yytext, yyleng));
+<STR>[^\"\n\\]+             rat_strappends (yytext, yyleng);
+[ \t]+                      /* Throw away whitespace */
+[0-9]+\.[0-9]+              yylval.dval = rat_atof (yytext, yyleng, ATOF_FULL); return NUM;
+[0-9]+\.                    yylval.dval = rat_atof (yytext, yyleng, ATOF_L); return NUM;
+\.[0-9]+                    yylval.dval = rat_atof (yytext, yyleng, ATOF_R); return NUM;
+[0-9]+                      yylval.dval = rat_atof (yytext, yyleng, ATOF_NAKED); return NUM;
+[A-Z_]+                     yylval.cpval = strdup (yytext); return ID;
+[a-z]{2,}                   yylval.cpval = strdup (yytext); return FUNCTION_NAME;
+l                           return LET;
+=                           return EQUAL;
+s                           return SUM;
+\+                          return PLUS;
+d                           return DIFFERENCE;
+-                           return MINUS;
+p                           return PRODUCT;
+\*                          return TIMES;
+q                           return QUOTIENT;
+\/                          return SLASH;
+r                           return REMAINDER;
+%                           return MOD;
+t                           return RAISE;
+\^                          return POWER;
+e                           return EXPONENTIATE;
+\(                          return LPAREN;
+\)                          return RPAREN;
+\{                          return LCURLY;
+\}                          return RCURLY;
+\\                          return PRINT;
+;                           return SEMICOLON;
+\n                          return SEMICOLON;
+,                           return COMMA;
+f                           return FUNCTION;
+@                           return INTEGER;
+.                           RUNTIME_ERROR ("Lexer: unrecognized token");
 
 %%
 
@@ -68,6 +87,86 @@ double rat_atof (char const * c, int clen, int type) {
 	} else {
 		return atof (c);
 	}
+}
+
+char* rat_strbuffer = NULL;
+int rat_strbuffersize;
+int rat_strbufferlength;
+void rat_strclear () {
+	if (rat_strbuffer != NULL) {
+		free (rat_strbuffer);
+	}
+	rat_strbuffer = (char*) malloc (sizeof (char) * rat_strbuffersize);
+	rat_strbuffersize = 1;
+	rat_strbufferlength = 0;
+}
+
+void rat_strappend (char c) {
+	if (rat_strbufferlength > rat_strbuffersize) {
+		char* new_rat_strbuffer = (char*) malloc (sizeof (char) * 2 * rat_strbuffersize);
+		memcpy (new_rat_strbuffer, rat_strbuffer, rat_strbufferlength * sizeof (char));
+		free (rat_strbuffer);
+		rat_strbuffer = new_rat_strbuffer;
+		rat_strbuffersize *= 2;
+	}
+	rat_strbuffer[rat_strbufferlength] = c;
+	rat_strbufferlength += 1;
+}
+
+void rat_strappends (char const * c, int leng) {
+	int i;
+	for (i = 0; i < leng; i++) {
+		rat_strappend (c[i]);
+	}
+}
+
+char * rat_strget () {
+	return rat_strbuffer;
+}
+
+int rat_octalescape (char const * c, int leng) {
+	int code = c[1] - '0';
+	if (leng > 2) {
+		code *= 8;
+		code += c[2] - '0';
+	}
+	if (leng > 3) {
+		code *= 8;
+		code += c[3] - '0';
+	}
+	return code;
+}
+
+int rat_strlen (char const * c) {
+	int length = 0;
+	char const * k = c;
+	int escape = 0;
+	
+	// Skip the opening quote
+	k += 1;
+	while (*k != '\0') {
+		if (*k == '\\') {
+			if (escape) {
+				length += 1;
+				escape = 0;
+			} else {
+				escape = 1;
+			}
+		} else if (*k == '"') {
+			if (escape) {
+				length += 1;
+				escape = 0;
+			} else {
+				break;
+			}
+		} else {
+			length += 1;
+			escape = 0;
+		}
+		k += 1;
+	}
+
+	return length;
 }
 
 char* newline_dup (char* c) {
@@ -177,6 +276,8 @@ int main (int argc, char** argv) {
 		env_put (runtime_global_env, "SCALE", PAIRTYPE_VALUE, value_from_integer (PRECISION_DEFAULT));
 		env_put (runtime_global_env, "IDP", PAIRTYPE_VALUE, value_from_integer (1));
 		print_result = 0;
+		runtime_errors = 0;
+		runtime_errors_overflow = 0;
 
 		if (action == PROGACTION_FILE || action == PROGACTION_FILE_INTERACTIVE) {
 			FILE* in = fopen (input_file_name, "r");
