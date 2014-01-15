@@ -9,8 +9,16 @@ Node* node_from_double (double d) {
 	n->type = NODETYPE_DOUBLE;
 	n->dval = d;
 	n->v = NULL;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
+	return n;
+}
+
+Node* node_from_integer (int i) {
+	Node* n = malloc (sizeof (Node));
+	n->type = NODETYPE_INTEGER;
+	n->ival = i;
+	n->v = NULL;
+	node_childlist_init (n);
 	return n;
 }
 
@@ -18,8 +26,7 @@ Node* node_from_value (Value* v) {
 	Node* n = malloc (sizeof (Node));
 	n->type = NODETYPE_VALUE;
 	n->v = v;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
 	return n;
 }
 
@@ -28,8 +35,7 @@ Node* node_from_identifier (char* c) {
 	n->type = NODETYPE_IDENTIFIER;
 	n->cpval = c;
 	n->v = NULL;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
 	return n;
 }
 
@@ -38,8 +44,7 @@ Node* node_from_string (char* c) {
 	n->type = NODETYPE_STRING;
 	n->cpval = c;
 	n->v = NULL;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
 	return n;
 }
 
@@ -48,8 +53,7 @@ Node* node_from_token (int t) {
 	n->type = NODETYPE_TOKEN;
 	n->ival = t;
 	n->v = NULL;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
 	return n;
 }
 
@@ -69,8 +73,7 @@ Node* node_from_token_c2 (int t, Node* c1, Node* c2) {
 Node* node_from_function (Node* formals, Node* expression) {
 	Node* n = malloc (sizeof (Node));
 	n->type = NODETYPE_FUNCTION;
-	n->children = malloc (sizeof (NodeList));
-	nodelist_init (n->children);
+	node_childlist_init (n);
 	node_append_child (n, formals);
 	node_append_child (n, expression);
 	return n;
@@ -84,6 +87,8 @@ void node_calculate_value (Node* n, Env* e) {
 
 	if (n->type == NODETYPE_DOUBLE) {
 		n->v = value_from_double (n->dval);
+	} else if (n->type == NODETYPE_INTEGER) {
+		n->v = value_from_integer (n->ival);
 	} else if (n->type == NODETYPE_STRING) {
 		n->v = value_from_string (n->cpval);
 	} else if (n->type == NODETYPE_IDENTIFIER) {
@@ -144,7 +149,7 @@ void node_calculate_value (Node* n, Env* e) {
 				rep = value_string( node_child (n, 0)->v );
 				printf ("%s\n", rep);
 				free (rep);
-				n->v = node_child (n, 0)->v;
+				n->v = value_from_none ();
 				break;
 			case LPAREN:
 				node_run_function (n, e);
@@ -209,6 +214,11 @@ void node_append_child (Node* n, Node* c) {
 	if (c != NULL) {
 		nodelist_insert (n->children, c);
 	}
+}
+
+void node_childlist_init (Node* n) {
+	n->children = (NodeList*) malloc (sizeof (NodeList));
+	nodelist_init (n->children);
 }
 
 void nodelist_init (NodeList* l) {

@@ -1,18 +1,24 @@
 %{
+    #include <gmp.h>
     #include <stdio.h>
     #include "node.h"
     #include "runtime.h"
+    #define BISON_ERROR_FORMAT " ~ %s\n"
+    #define BISON_ERROR_OVERFLOW_FORMAT " ~ ErrorReporting: %d more errors suppressed\n"
     int yylex (void);
+    void runtime_error_print ();
     void yyerror (char const *);
 %}
 
 %union {
     Node* npval;
-    double dval;
     char* cpval;
+    mpf_t* fval;
+    mpz_t* zval;
 }
 
-%token <dval> NUM
+%token <fval> NUM
+%token <zval> INTEGER
 %token <cpval> ID
 %token <cpval> FUNCTION_NAME
 %token <cpval> STRING
@@ -68,6 +74,7 @@
 %type <npval> call
 %type <npval> atom
 %type <npval> target
+%type <npval> integer
 %type <npval> number
 %type <npval> identifier
 %type <npval> function_name
@@ -78,7 +85,9 @@
 program : stmts {
             node_calculate_value ($1, runtime_global_env);
             char* rep = value_string (node_value ($1));
-            if (print_result) {
+            if (runtime_errors) {
+                runtime_error_print ();
+            } else if (print_result && rep[0] != '\0') {
                 printf ("%s\n", rep);
             }
             free (rep); }
@@ -143,10 +152,13 @@ call : atom
 atom : number
      | identifier
      | string
+     | integer
      ;
 target : identifier
        ;
-number : NUM { $$ = node_from_double ($1); }
+integer : INTEGER { $$ = node_from_value (value_from_mpz ($1)); }
+        ;
+number : NUM { $$ = node_from_value (value_from_mpf ($1)); }
        ;
 identifier : ID { $$ = node_from_identifier ($1); }
            ;
@@ -159,6 +171,19 @@ semicolon : SEMICOLON
           ;
 
 %%
+void runtime_error_print () {
+    int i;
+    for (i = 0; i < runtime_errors; i++) {
+        fprintf (stderr, BISON_ERROR_FORMAT, runtime_error[i]);
+    }
+    if (runtime_errors_overflow) {
+        fprintf (stderr, BISON_ERROR_OVERFLOW_FORMAT, runtime_errors_overflow);
+    }
+    runtime_errors = 0;
+    runtime_errors_overflow = 0;
+}
+
 void yyerror (char const * c) {
-    printf ("%s\n", c);
+    runtime_error_print ();
+    fprintf (stderr, BISON_ERROR_FORMAT, "Parser: invalid syntax");
 }

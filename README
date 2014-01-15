@@ -14,6 +14,7 @@ Requirements
  - flex
  - bison
  - readline
+ - gnu multiple precision library
 
 Compiling
 ---------
