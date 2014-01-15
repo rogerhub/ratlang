@@ -1,4 +1,5 @@
 %{
+    #include <gmp.h>
     #include <stdio.h>
     #include "node.h"
     #include "runtime.h"
@@ -11,11 +12,13 @@
 
 %union {
     Node* npval;
-    double dval;
     char* cpval;
+    mpf_t* fval;
+    mpz_t* zval;
 }
 
-%token <dval> NUM
+%token <fval> NUM
+%token <zval> INTEGER
 %token <cpval> ID
 %token <cpval> FUNCTION_NAME
 %token <cpval> STRING
@@ -42,7 +45,6 @@
 %token SEMICOLON
 %token COMMA
 %token FUNCTION
-%token INTEGER
 
 %left PLUS MINUS
 %left TIMES SLASH
@@ -154,9 +156,9 @@ atom : number
      ;
 target : identifier
        ;
-integer : INTEGER NUM { $$ = node_from_integer ($2); }
+integer : INTEGER { $$ = node_from_value (value_from_mpz ($1)); }
         ;
-number : NUM { $$ = node_from_double ($1); }
+number : NUM { $$ = node_from_value (value_from_mpf ($1)); }
        ;
 identifier : ID { $$ = node_from_identifier ($1); }
            ;

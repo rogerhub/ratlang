@@ -25,7 +25,11 @@ void value_destroy (Value* v);
 
 Value* value_from_double (double d);
 
+Value* value_from_mpf (mpf_t* f);
+
 Value* value_from_integer (int i);
+
+Value* value_from_mpz (mpz_t* z);
 
 Value* value_from_string (char* s);
 

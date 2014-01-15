@@ -2,6 +2,7 @@
 
 %{
 #include <errno.h>
+#include <gmp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,12 +13,14 @@
 #include "node.h"
 #include "ratlang_bison.h"
 #include "runtime.h"
+#include "value.h"
 
 #define ATOF_FULL 1024
 #define ATOF_L 1025
 #define ATOF_R 1026
 #define ATOF_NAKED 1027
-double rat_atof (char const * c, int clen, int type);
+mpf_t * rat_atof (char const * c, int clen, int type);
+mpz_t * rat_atoz (char const * c, int clen);
 void rat_strclear ();
 void rat_strappend (char c);
 void rat_strappends (char const * c, int leng);
@@ -26,6 +29,7 @@ int rat_octalescape (char const * c, int leng);
 %}
 
 %x STR
+%x INT
 %%
 <INITIAL>\"                 BEGIN(STR); rat_strclear ();
 <STR>\"                     BEGIN(INITIAL); yylval.cpval = strdup (rat_strget ()); return STRING;
@@ -41,10 +45,11 @@ int rat_octalescape (char const * c, int leng);
 <STR>\\[0-7]{1,3}           rat_strappend (rat_octalescape (yytext, yyleng));
 <STR>[^\"\n\\]+             rat_strappends (yytext, yyleng);
 [ \t]+                      /* Throw away whitespace */
-[0-9]+\.[0-9]+              yylval.dval = rat_atof (yytext, yyleng, ATOF_FULL); return NUM;
-[0-9]+\.                    yylval.dval = rat_atof (yytext, yyleng, ATOF_L); return NUM;
-\.[0-9]+                    yylval.dval = rat_atof (yytext, yyleng, ATOF_R); return NUM;
-[0-9]+                      yylval.dval = rat_atof (yytext, yyleng, ATOF_NAKED); return NUM;
+[0-9]+\.[0-9]+              yylval.fval = rat_atof (yytext, yyleng, ATOF_FULL); return NUM;
+[0-9]+\.                    yylval.fval = rat_atof (yytext, yyleng, ATOF_L); return NUM;
+\.[0-9]+                    yylval.fval = rat_atof (yytext, yyleng, ATOF_R); return NUM;
+[0-9]+                      yylval.fval = rat_atof (yytext, yyleng, ATOF_NAKED); return NUM;
+<INT>[0-9]+                 yylval.zval = rat_atoz (yytext, yyleng); BEGIN(INITIAL); return INTEGER;
 [A-Z_]+                     yylval.cpval = strdup (yytext); return ID;
 [a-z]{2,}                   yylval.cpval = strdup (yytext); return FUNCTION_NAME;
 l                           return LET;
@@ -71,22 +76,62 @@ e                           return EXPONENTIATE;
 \n                          return SEMICOLON;
 ,                           return COMMA;
 f                           return FUNCTION;
-@                           return INTEGER;
+@                           BEGIN(INT);
 .                           RUNTIME_ERROR ("Lexer: unrecognized token");
 
 %%
 
-double rat_atof (char const * c, int clen, int type) {
+mpf_t* rat_atof (char const * c, int clen, int type) {
+	mpf_t* result = (mpf_t*) malloc (sizeof (mpf_t));
+	mpf_init2 (*result, value_precision ());
+	mpf_set_si (*result, 0);
+	int i;
+	char n;
 	if (type == ATOF_NAKED) {
-		double result = 0.0;
 		for (clen -= 1; clen >= 0; clen -= 1) {
-			const char n = *(c + clen);
-			result = (result + (n - '0')) / 10;
+			n = c[clen];
+			mpf_add_ui (*result, *result, n - '0');
+			mpf_div_ui (*result, *result, 10);
 		}
 		return result;
-	} else {
-		return atof (c);
+	} else if (type == ATOF_L) {
+		for (i = 0; i < clen - 1; i += 1) {
+			n = c[i];
+			mpf_mul_ui (*result, *result, 10);
+			mpf_add_ui (*result, *result, n - '0');
+		}
+		return result;
+	} else if (type == ATOF_R) {
+		for (clen -= 1; clen > 0; clen -= 1) {
+			n = c[clen];
+			mpf_add_ui (*result, *result, n - '0');
+			mpf_div_ui (*result, *result, 10);
+		}
+		return result;
+	} else if (type == ATOF_FULL) {
+		i = 0;
+		while (i < clen && c[i] != '.') i++;
+		mpf_t* left = rat_atof (c, i + 1, ATOF_L);
+		mpf_t* right = rat_atof (c + i, clen - i, ATOF_R);
+		mpf_add (*result, *left, *right);
+		free (left);
+		free (right);
+		return result;
 	}
+}
+
+mpz_t* rat_atoz (char const * c, int clen) {
+	mpz_t* result = (mpz_t*) malloc (sizeof (mpz_t));
+	mpz_init2 (*result, value_precision ());
+	mpz_set_si (*result, 0);
+	int i;
+	char n;
+	for (i = 0; i < clen; i += 1) {
+		n = c[i];
+		mpz_mul_ui (*result, *result, 10);
+		mpz_add_ui (*result, *result, n - '0');
+	}
+	return result;
 }
 
 char* rat_strbuffer = NULL;
@@ -135,38 +180,6 @@ int rat_octalescape (char const * c, int leng) {
 		code += c[3] - '0';
 	}
 	return code;
-}
-
-int rat_strlen (char const * c) {
-	int length = 0;
-	char const * k = c;
-	int escape = 0;
-	
-	// Skip the opening quote
-	k += 1;
-	while (*k != '\0') {
-		if (*k == '\\') {
-			if (escape) {
-				length += 1;
-				escape = 0;
-			} else {
-				escape = 1;
-			}
-		} else if (*k == '"') {
-			if (escape) {
-				length += 1;
-				escape = 0;
-			} else {
-				break;
-			}
-		} else {
-			length += 1;
-			escape = 0;
-		}
-		k += 1;
-	}
-
-	return length;
 }
 
 char* newline_dup (char* c) {

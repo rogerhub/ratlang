@@ -36,11 +36,27 @@ Value* value_from_double (double d) {
 	return v;
 }
 
+Value* value_from_mpf (mpf_t* f) {
+	Value* v = (Value*) malloc (sizeof (Value));
+	v->type = VALUETYPE_PRIMITIVE;
+	mpf_init2 (v->fval, value_precision ());
+	mpf_set (v->fval, *f);
+	return v;
+}
+
 Value* value_from_integer (int i) {
 	Value* v = (Value*) malloc (sizeof (Value));
 	v->type = VALUETYPE_INTEGER;
 	mpz_init2 (v->zval, value_precision ());
 	mpz_set_si (v->zval, i);
+	return v;
+}
+
+Value* value_from_mpz (mpz_t* z) {
+	Value* v = (Value*) malloc (sizeof (Value));
+	v->type = VALUETYPE_INTEGER;
+	mpz_init2 (v->zval, value_precision ());
+	mpz_set (v->zval, *z);
 	return v;
 }
 
@@ -90,7 +106,7 @@ char* value_string (Value* v) {
 		do {
 			size *= 2;
 			buf = (char*) malloc (size * sizeof (char));
-			len = gmp_snprintf (buf, size, "%Ff", v->fval);
+			len = gmp_snprintf (buf, size, "%.Ff", v->fval);
 		} while (len > size);
 		return buf;
 	} else {
@@ -146,7 +162,9 @@ Value* value_promote_primitive (Value* v) {
 	} else if (v->type == VALUETYPE_PRIMITIVE) {
 		mpf_set (promoted->fval, v->fval);
 	} else {
-		/** TODO */
+		RUNTIME_ERROR ("PromotePrimitive: unrecognized operand type");
+		value_destroy (promoted);
+		return value_from_none ();
 	}
 	return promoted;
 }
@@ -186,9 +204,7 @@ Value* value_subtract (Value* v, Value* w) {
 	int common_type = value_common_type (v, w);
 	Value* r = malloc (sizeof (Value));
 	r->type = common_type;
-	if (common_type == VALUETYPE_STRING) {
-		// TODO
-	} else if (common_type == VALUETYPE_PRIMITIVE) {
+	if (common_type == VALUETYPE_PRIMITIVE) {
 		mpf_init2 (r->fval, value_precision ());
 		Value* op1 = value_promote_primitive (v);
 		Value* op2 = value_promote_primitive (w);
@@ -199,23 +215,116 @@ Value* value_subtract (Value* v, Value* w) {
 		mpz_init2 (r->zval, value_precision ());
 		mpz_sub (r->zval, v->zval, w->zval);
 	} else {
-		// TODO
+		RUNTIME_ERROR ("ValueSubtract: incompatible types");
+		free (r);
+		return value_from_none ();
 	}
 	return r;
 }
 
 Value* value_multiply (Value* v, Value* w) {
+	int common_type = value_common_type (v, w);
 	Value* r = malloc (sizeof (Value));
+	r->type = common_type;
+	if (common_type == VALUETYPE_PRIMITIVE) {
+		mpf_init2 (r->fval, value_precision ());
+		Value* op1 = value_promote_primitive (v);
+		Value* op2 = value_promote_primitive (w);
+		mpf_mul (r->fval, op1->fval, op2->fval);
+		value_destroy (op1);
+		value_destroy (op2);
+	} else if (common_type == VALUETYPE_INTEGER) {
+		mpz_init2 (r->zval, value_precision ());
+		mpz_mul (r->zval, v->zval, w->zval);
+	} else {
+		RUNTIME_ERROR ("ValueMultiply: incompatible types");
+		free (r);
+		return value_from_none ();
+	}
 	return r;
 }
 
 Value* value_divide (Value* v, Value* w) {
+	int common_type = value_common_type (v, w);
 	Value* r = malloc (sizeof (Value));
+	r->type = common_type;
+	if (common_type == VALUETYPE_PRIMITIVE) {
+		mpf_init2 (r->fval, value_precision ());
+		Value* op1 = value_promote_primitive (v);
+		Value* op2 = value_promote_primitive (w);
+		if (mpf_sgn (op2->fval) == 0) {
+			RUNTIME_ERROR ("ValueDivide: division by zero");
+			free (r);
+			value_destroy (op1);
+			value_destroy (op2);
+			return value_from_none ();
+		} else {
+			mpf_div (r->fval, op1->fval, op2->fval);
+			value_destroy (op1);
+			value_destroy (op2);
+		}
+	} else if (common_type == VALUETYPE_INTEGER) {
+		mpz_init2 (r->zval, value_precision ());
+		if (mpz_sgn (w->zval) == 0) {
+			RUNTIME_ERROR ("ValueDivide: division by zero");
+			free (r);
+			return value_from_none ();
+		} else {
+			mpz_tdiv_q (r->zval, v->zval, w->zval);
+		}
+	} else {
+		RUNTIME_ERROR ("ValueDivide: incompatible types");
+		free (r);
+		return value_from_none ();
+	}
 	return r;
 }
 
 Value* value_remainder (Value* v, Value* w) {
+	int common_type = value_common_type (v, w);
 	Value* r = malloc (sizeof (Value));
+	r->type = common_type;
+	if (common_type == VALUETYPE_PRIMITIVE) {
+		mpf_init2 (r->fval, value_precision ());
+		Value* op1 = value_promote_primitive (v);
+		Value* op2 = value_promote_primitive (w);
+		if (mpf_sgn (op2->fval) == 0) {
+			RUNTIME_ERROR ("ValueRemainder: remainder by zero");
+			free (r);
+			value_destroy (op1);
+			value_destroy (op2);
+			return value_from_none ();
+		} else {
+			mpf_t quotient;
+			mpf_t quotient_truncated;
+			mpf_t remainder_multiplier;
+			mpf_init2 (quotient, value_precision ());
+			mpf_init2 (quotient_truncated, value_precision ());
+			mpf_init2 (remainder_multiplier, value_precision ());
+			mpf_div (quotient, op1->fval, op2->fval);
+			mpf_trunc (quotient_truncated, quotient);
+			mpf_sub (remainder_multiplier, quotient, quotient_truncated);
+			mpf_mul (r->fval, remainder_multiplier, op2->fval);
+			mpf_clear (quotient);
+			mpf_clear (quotient_truncated);
+			mpf_clear (remainder_multiplier);
+			value_destroy (op1);
+			value_destroy (op2);
+		}
+	} else if (common_type == VALUETYPE_INTEGER) {
+		mpz_init2 (r->zval, value_precision ());
+		if (mpz_sgn (w->zval) == 0) {
+			RUNTIME_ERROR ("ValueRemainder: remainder by zero");
+			free (r);
+			return value_from_none ();
+		} else {
+			mpz_mod (r->zval, v->zval, w->zval);
+		}
+	} else {
+		RUNTIME_ERROR ("ValueDivide: incompatible types");
+		free (r);
+		return value_from_none ();
+	}
 	return r;
 }
 
